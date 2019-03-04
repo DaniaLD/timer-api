@@ -5,23 +5,25 @@ const Task = require('../models/Task');
 router.route('/')
     .get((req, res) => {
         Task.find({}, (err, data) => {
-            err ? console.log(`Couldn't get Tasks. Error => ${err}`) : res.json(data);
+            err ? 
+                res.status(400).json({"Message": `Couldn't get tasks. Error => ${err}`}) :
+                res.status(200).json(data);
         });
     })
     .post((req, res) => {
         const newTask = new Task();
 
         newTask.title = req.body.title;
-        newTask.date = req.body.date;
+        newTask.startedAt = req.body.startedAt;
+        newTask.finishedAt = req.body.finishedAt;
         newTask.describtion = req.body.describtion;
 
-        
         newTask.save(err => {
             if (err) {
-                console.log(`Couldn't save the new task. Error => ${err}`);
+                res.status(400).json({"Message": `Couldn't save the new task. Error => ${err}`});
             } else {
-                console.log('New task has been saved successfully ...');
-                res.json(newTask);
+                console.log("New task has been saved successfully ...");
+                res.status(201).json(newTask);
             }
         });
     });
@@ -32,7 +34,13 @@ router.get('/today', (req, res) => {
 
 router.route('/:id')
     .put((req, res) => {
-
+        Task.findOneAndUpdate({ _id: req.params.id }, req.body,
+            { returnNewDocument: true,
+              useFindAndModify: false },
+            err => {
+                err ? console.log(`Couldn't update the task. Error => ${err}`) : res.status(200);
+            }
+        ).then(task => res.json(task));
     })
     .delete((req, res) => {
 
