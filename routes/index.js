@@ -29,7 +29,28 @@ router.route('/')
     });
 
 router.get('/today', (req, res) => {
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.getMonth();
+    const year = today.getFullYear(); 
 
+    Task.find({ $or: [
+        { startedAt: { 
+            $gte: new Date(year, month, day, 00, 00, 00, 000),
+            $lte: new Date(year, month, day, 23, 59, 59, 999) }
+        },
+        { finishedAt: {
+            $gte: new Date(year, month, day, 00, 00, 00, 000),
+            $lte: new Date(year, month, day, 23, 59, 59, 999) }
+        }] },
+        (err, data) => {
+            if (err) {
+                res.status(400).json({"Message": `Couldn't get today tasks. Error => ${err}`});
+            } else {
+                res.status(200).json(data);
+            }
+        }
+    )
 });
 
 router.route('/:id')
@@ -38,7 +59,11 @@ router.route('/:id')
             { returnNewDocument: true,
               useFindAndModify: false },
             err => {
-                err ? console.log(`Couldn't update the task. Error => ${err}`) : res.status(200);
+                if (err) {
+                    res.status(400).json({"Message": `Couldn't update the task. Error => ${err}`});
+                } else {
+                    res.status(200);
+                }
             }
         ).then(task => res.json(task));
     })
